@@ -200,19 +200,24 @@
         </script>
         {% if turnstile_enabled %}
         <script>
-            const csrfToken = document.querySelector('input[name=csrfmiddlewaretoken]').value;
+            const csrfToken = document.querySelector('input[name=csrfmiddlewaretoken]')?.value || '';
             let captchaToken = null;
 
             function onCaptchaSuccess(token) {
                 captchaToken = token;
-                document.getElementById('captcha-submit').disabled = false;
+                const submitBtn = document.getElementById('captcha-submit');
+                if (submitBtn) submitBtn.disabled = false;
             }
 
             document.getElementById('captcha-submit').addEventListener('click', async () => {
                 const errorEl = document.getElementById('captcha-error');
                 errorEl.style.display = 'none';
+
+                const turnstileInput = document.querySelector('input[name="cf-turnstile-response"]');
+                const tokenValue = (turnstileInput && turnstileInput.value) || captchaToken || '';
+
                 const form = new FormData();
-                form.append('cf-turnstile-response', captchaToken || '');
+                form.append('cf-turnstile-response', tokenValue);
 
                 const resp = await fetch('{% url "captcha_verify" %}', {
                     method: 'POST',
