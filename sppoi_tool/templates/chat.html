@@ -1749,12 +1749,20 @@
 		const resp = await fetch(`/chat/stream/`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-			body: JSON.stringify({ message: text, lang: currentLang })
+			body: JSON.stringify({ message: text, lang: currentLang }),
+			credentials: 'same-origin'
 		});
 
 		if (!resp.ok) {
-			const err = await resp.json();
-			errorMsg.textContent = err.error || 'Erro ao consultar.';
+			let errorText = 'Erro ao consultar.';
+			try {
+				const err = await resp.json();
+				errorText = err.error || errorText;
+			} catch (e) {
+				const raw = await resp.text();
+				if (raw) errorText = raw;
+			}
+			errorMsg.textContent = errorText;
 			errorMsg.style.display = 'block';
 			setStreamingState(false);
 			return;
