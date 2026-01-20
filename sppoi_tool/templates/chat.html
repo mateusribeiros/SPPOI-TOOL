@@ -1755,12 +1755,14 @@
 
 		if (!resp.ok) {
 			let errorText = 'Erro ao consultar.';
-			try {
-				const err = await resp.json();
-				errorText = err.error || errorText;
-			} catch (e) {
-				const raw = await resp.text();
-				if (raw) errorText = raw;
+			const raw = await resp.text();
+			if (raw) {
+				try {
+					const err = JSON.parse(raw);
+					errorText = err.error || errorText;
+				} catch (e) {
+					errorText = raw;
+				}
 			}
 			errorMsg.textContent = errorText;
 			errorMsg.style.display = 'block';

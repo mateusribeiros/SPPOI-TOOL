@@ -10,6 +10,17 @@ if not SECRET_KEY:
     raise RuntimeError('DJANGO_SECRET_KEY must be set in the environment')
 DEBUG = os.environ.get('DJANGO_DEBUG', os.environ.get('DEBUG', 'False')).lower() == 'true'
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',') if host.strip()]
+_csrf_trusted_raw = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '')
+if _csrf_trusted_raw:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_trusted_raw.split(',') if origin.strip()]
+else:
+    _trusted = []
+    for host in ALLOWED_HOSTS:
+        if host == '*':
+            continue
+        _trusted.append(f'https://{host}')
+        _trusted.append(f'http://{host}')
+    CSRF_TRUSTED_ORIGINS = _trusted
 
 INSTALLED_APPS = [
     'django.contrib.admin',
