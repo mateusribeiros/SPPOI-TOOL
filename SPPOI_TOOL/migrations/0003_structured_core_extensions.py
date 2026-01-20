@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('chatapp', '0001_initial'),
+        ('sppoi_tool', '0001_initial'),
     ]
 
     operations = [
@@ -131,6 +131,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='estilointegracao',
             name='interfaces_usadas',
-            field=models.ManyToManyField(blank=True, related_name='integracoes', to='chatapp.interface'),
+            field=models.ManyToManyField(blank=True, related_name='integracoes', to='sppoi_tool.interface'),
         ),
     ]

@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ('contato_responsavel', models.CharField(blank=True, max_length=100)),
                 ('mantenedor', models.CharField(blank=True, max_length=100)),
                 ('requisitos_autenticacao', models.CharField(max_length=50)),
-                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sistemas', to='chatapp.projeto')),
+                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sistemas', to='sppoi_tool.projeto')),
             ],
         ),
         migrations.CreateModel(
@@ -50,8 +50,8 @@ class Migration(migrations.Migration):
                 ('exemplo_dados', models.TextField(blank=True)),
                 ('esquema', models.TextField(blank=True)),
                 ('throttling', models.TextField(blank=True)),
-                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='interfaces_projeto', to='chatapp.projeto')),
-                ('sistema', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='interfaces', to='chatapp.sistema')),
+                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='interfaces_projeto', to='sppoi_tool.projeto')),
+                ('sistema', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='interfaces', to='sppoi_tool.sistema')),
             ],
         ),
         migrations.CreateModel(
@@ -60,9 +60,9 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('estilo', models.CharField(max_length=50)),
                 ('detalhes', models.JSONField(blank=True, null=True)),
-                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='estilos_integracao', to='chatapp.projeto')),
-                ('sistema_destino', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='integracoes_destino', to='chatapp.sistema')),
-                ('sistema_origem', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='integracoes_origem', to='chatapp.sistema')),
+                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='estilos_integracao', to='sppoi_tool.projeto')),
+                ('sistema_destino', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='integracoes_destino', to='sppoi_tool.sistema')),
+                ('sistema_origem', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='integracoes_origem', to='sppoi_tool.sistema')),
             ],
         ),
         migrations.CreateModel(
@@ -73,7 +73,7 @@ class Migration(migrations.Migration):
                 ('content', models.TextField()),
                 ('prompt_used', models.TextField(blank=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='mensagens', to='chatapp.projeto')),
+                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='mensagens', to='sppoi_tool.projeto')),
             ],
         ),
     ]

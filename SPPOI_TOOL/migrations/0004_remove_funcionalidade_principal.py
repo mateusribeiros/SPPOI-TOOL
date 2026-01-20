@@ -4,7 +4,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('chatapp', '0003_structured_core_extensions'),
+        ('sppoi_tool', '0003_structured_core_extensions'),
     ]
 
     operations = [

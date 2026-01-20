@@ -5,7 +5,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('chatapp.urls')),
+    path('', include('sppoi_tool.urls')),
 ]
 
 if settings.DEBUG:
