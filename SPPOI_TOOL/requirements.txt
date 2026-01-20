@@ -1,0 +1,13 @@
+Django==5.2.1
+requests==2.32.3
+python-dotenv==1.1.0
+langchain==0.3.25
+langchain-chroma==0.2.4
+langchain-community==0.3.24
+langchain-core==0.3.63
+langchain-huggingface==0.2.0
+langchain-text-splitters==0.3.8
+chromadb==1.0.12
+sentence-transformers==4.1.0
+openai==1.59.7
+gunicorn==23.0.0
