@@ -116,15 +116,18 @@
 		<section id="tutorial" class="py-5 bg-white">
 			<div class="container">
 				<h2 class="text-center text-black mb-4" data-i18n="video_tutorial">{% trans "Tutorial em Vídeo" %}</h2>
-        
+
 				<div class="ratio ratio-16x9 rounded shadow border border-secondary overflow-hidden">
-					<video controls>
-						<source src="{% static 'bootstrap/assets/img/sppoitutorial.webm' %}" type="video/webm">
-						<span data-i18n="video_unsupported">{% trans "Seu navegador não suporta o elemento de vídeo." %}</span>
-					</video>
+					<iframe
+						src="https://www.youtube.com/embed/_wO8UL0VdPk"
+						title="YouTube video player"
+						frameborder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+						allowfullscreen
+					></iframe>
 				</div>
 			</div>
-		</section>     
+		</section>    
     
 		<footer class="bg-black text-center py-5">
 			<div class="container px-5">
