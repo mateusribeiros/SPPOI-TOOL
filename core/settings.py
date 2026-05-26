@@ -9,7 +9,11 @@ load_dotenv(BASE_DIR / '.env')
 DEBUG = os.environ.get('DJANGO_DEBUG', os.environ.get('DEBUG', 'True')).lower() == 'true'
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 if not SECRET_KEY or SECRET_KEY == '<our_key>':
-    SECRET_KEY = get_random_secret_key()
+    if DEBUG:
+        # Stable local key keeps dev sessions alive across auto-restarts.
+        SECRET_KEY = 'django-insecure-sppoi-local-dev-key'
+    else:
+        SECRET_KEY = get_random_secret_key()
 
 default_hosts = '127.0.0.1,localhost'
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', default_hosts).split(',') if host.strip()]
@@ -100,6 +104,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 HF_API_TOKEN = os.environ.get('HF_API_TOKEN', '')
+SPPOI_DEV_PERSIST_PROJECTS = DEBUG and os.environ.get('SPPOI_DEV_PERSIST_PROJECTS', 'True').lower() == 'true'
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
