@@ -1,4 +1,4 @@
-import json
+﻿import json
 import logging
 import os
 import re
@@ -586,11 +586,11 @@ def _build_evidence_highlights(system_records, interface_records, integration_re
 		name = system.get('name', 'System')
 		auth = [item for item in system.get('authentication_requirements', []) if item.lower() not in ('none', 'nenhuma')]
 		if auth:
-			authentication.append(f'{name}: mecanismos de autenticaÃ§Ã£o declarados ({", ".join(auth)})')
+			authentication.append(f'{name}: declared authentication mechanisms ({", ".join(auth)})')
 		if system.get('supported_protocols'):
-			topology.append(f'{name}: protocolos {", ".join(system["supported_protocols"])}')
+			topology.append(f'{name}: protocols {", ".join(system["supported_protocols"])}')
 		if system.get('supported_data_formats'):
-			contracts.append(f'{name}: formatos de dados {", ".join(system["supported_data_formats"])}')
+			contracts.append(f'{name}: data formats {", ".join(system["supported_data_formats"])}')
 		if system.get('architectural_notes'):
 			evolution.append(f'{name}: {_clean_text(system["architectural_notes"], 180)}')
 
@@ -599,10 +599,10 @@ def _build_evidence_highlights(system_records, interface_records, integration_re
 		system_name = interface.get('related_system', 'System')
 		auth = [item for item in interface.get('authentication', []) if item.lower() not in ('none', 'nenhuma')]
 		if auth:
-			authentication.append(f'{name} ({system_name}): autenticaÃ§Ã£o {", ".join(auth)}')
+			authentication.append(f'{name} ({system_name}): authentication {", ".join(auth)}')
 		if interface.get('data_schema') or interface.get('data_example') or interface.get('data_format'):
 			contracts.append(
-				f'{name} ({system_name}): contrato de dados com formato {interface.get("data_format", "nÃ£o informado")}'
+				f'{name} ({system_name}): data contract with format {interface.get("data_format", "not informed")}'
 			)
 		rate_limits = interface.get('rate_limits', {})
 		if rate_limits:
@@ -613,13 +613,13 @@ def _build_evidence_highlights(system_records, interface_records, integration_re
 		for key in ('delivery_guarantees', 'reconnection_policy', 'processing_mode', 'statefulness'):
 			if details.get(key):
 				reliability.append(f'{name} ({system_name}): {key} = {details[key]}')
-		topology.append(f'{name} ({system_name}): interface do tipo {interface.get("type", "nÃ£o informado")}')
+		topology.append(f'{name} ({system_name}): interface type {interface.get("type", "not informed")}')
 		if interface.get('technical_notes'):
 			evolution.append(f'{name} ({system_name}): {_clean_text(interface["technical_notes"], 180)}')
 
 	for integration in integration_records:
-		flow = integration.get('flow', 'Fluxo')
-		topology.append(f'{flow}: estilo {integration.get("style", "nÃ£o informado")}')
+		flow = integration.get('flow', 'Flow')
+		topology.append(f'{flow}: style {integration.get("style", "not informed")}')
 		if integration.get('interfaces_used'):
 			topology.append(f'{flow}: interfaces {", ".join(integration["interfaces_used"])}')
 		if integration.get('architectural_rationale'):
@@ -670,31 +670,31 @@ def _build_analysis_packet(project, systems, interfaces, integration_styles):
 		'integration_styles': integration_records,
 		'explicit_evidence_highlights': evidence_highlights,
 		'analysis_priority_dimensions': [
-			'contratos e semÃ¢ntica de dados entre sistemas',
-			'acoplamento, topologia e dependÃªncias entre interfaces',
-			'transformaÃ§Ãµes, sincronizaÃ§Ã£o e compatibilidade entre formatos',
-			'governanÃ§a de versionamento e evoluÃ§Ã£o de interfaces',
-			'impactos operacionais de entrega, processamento e consistÃªncia do fluxo',
+			'data contracts and semantics across systems',
+			'coupling, topology, and dependencies across interfaces',
+			'transformations, synchronization, and compatibility across formats',
+			'version governance and interface evolution',
+			'operational impacts on delivery, processing, and flow consistency',
 		],
 		'collected_dimensions': [
-			'sistemas envolvidos',
-			'papel no fluxo',
-			'protocolos e formatos de dados',
-			'mecanismos de autenticaÃ§Ã£o declarados por sistema e interface',
+			'involved systems',
+			'role in the flow',
+			'protocols and data formats',
+			'declared authentication mechanisms by system and interface',
 			'throttling',
-			'operaÃ§Ãµes suportadas',
-			'schemas e exemplos de dados',
-			'justificativa arquitetural',
-			'detalhes tÃ©cnicos especÃ­ficos do estilo de integraÃ§Ã£o',
+			'supported operations',
+			'schemas and data examples',
+			'architectural rationale',
+			'integration-style-specific technical details',
 		],
 		'non_collected_dimensions_by_default': [
-			'polÃ­tica corporativa de seguranÃ§a',
-			'polÃ­tica corporativa de retries',
+			'corporate security policy',
+			'corporate retry policy',
 			'dlq',
-			'stack de observabilidade',
-			'procedimentos de incident response',
+			'observability stack',
+			'incident response procedures',
 			'encryption at rest',
-			'sla formal',
+			'formal sla',
 		],
 	}
 
@@ -744,144 +744,223 @@ def create_prompt(project, systems, interfaces, integration_styles, lang='pt'):
 
 	if selected_lang == 'pt':
 		system_prompt = """
-Voce atua como um arquiteto senior de integracao e interoperabilidade especializado em analise e planejamento.
+You act as a senior integration and interoperability architect specialized in analysis and planning.
 
-CONTEXTO DE PAPEL:
-- O usuario cadastrou dados tecnicos reais sobre sistemas, interfaces e estilos de integracao.
-- Sua tarefa e avaliar somente a arquitetura da integracao entre esses sistemas.
-- Nunca descreva a SPPOI Tool como se ela fosse um dos sistemas analisados.
+ROLE CONTEXT:
+- The user registered real technical data about systems, interfaces, and integration styles.
+- Your task is to assess only the integration architecture between these systems.
+- Never describe SPPOI Tool as if it were one of the analyzed systems.
 
-TECNICAS DE RACIOCINIO:
-- Use role-playing context provisioning: responda como revisor tecnico de integracoes corporativas.
-- Use chain-of-thought de forma privada: raciocine passo a passo internamente, mas nao exponha esse raciocinio.
-- Use zero-shot para a estrutura global e few-shot para calibrar profundidade de riscos e recomendacoes com os exemplos fornecidos.
+REASONING TECHNIQUES:
+- Use role-playing context provisioning: respond as a technical reviewer of corporate integrations.
+- Use chain-of-thought privately: reason step by step internally, but do not expose that reasoning.
+- Use zero-shot for the global structure and few-shot to calibrate the depth of risks and recommendations with the provided examples.
 
-REGRAS CRITICAS:
-- Analise apenas o cenario de integracao e interoperabilidade dos sistemas cadastrados.
-- Nao invente componentes, controles, politicas ou falhas nao sustentadas pelas evidencias.
-- Nao cite a ausencia de dimensoes que a ferramenta nao coleta por padrao como se isso fosse, por si so, o principal risco.
-- Priorize, nesta ordem, contratos e semantica de dados, acoplamento entre sistemas e interfaces, transformacoes e sincronizacao do fluxo, governanca de versao e evolucao arquitetural.
-- Politica corporativa de seguranca, politica corporativa de retries, DLQ, observabilidade formal, SLA e encryption at rest so podem virar foco de risco se aparecerem explicitamente nas evidencias.
-- Quando houver autenticacao, protocolos, schemas, throttling, contratos de dados, garantias de entrega ou justificativas arquiteturais declaradas, priorize essas evidencias sem extrapolar para politicas corporativas nao informadas.
-- Se a evidencia de seguranca se limitar a mecanismos de autenticacao declarados, trate isso apenas como contexto secundario e nunca como eixo dominante das secoes 3 e 4.
-- O sumario executivo nao pode repetir a analise arquitetonica.
-- Os riscos devem ser profundos, concretos e diferentes entre si.
-- As recomendacoes devem ser profundas, concretas e diferentes entre si.
-- O relatorio final deve estar integralmente em portugues do Brasil, exceto nomes proprios, produtos, protocolos e jargoes tecnicos.
-- Nao deixe rotulos, frases completas ou campos inteiros em ingles.
+CRITICAL RULES:
+- Analyze only the integration and interoperability scenario of the registered systems.
+- Do not invent components, controls, policies, or failures not supported by the evidence.
+- Do not cite the absence of dimensions that the tool does not collect by default as if that alone were the main risk.
+- Prioritize, in this order, data contracts and semantics, coupling between systems and interfaces, flow transformations and synchronization, version governance, and architectural evolution.
+- Corporate security policy, corporate retry policy, DLQ, formal observability, SLA, and encryption at rest may only become a central risk if they appear explicitly in the evidence.
+- When authentication, protocols, schemas, throttling, data contracts, delivery guarantees, or architectural rationales are declared, prioritize those pieces of evidence without extrapolating to uninformed corporate policies.
+- If the security evidence is limited to declared authentication mechanisms, treat it only as secondary context and never as the dominant axis of sections 3 and 4.
+- The executive summary cannot repeat the architectural analysis.
+- The risks must be deep, concrete, and different from each other.
+- The recommendations must be deep, concrete, and different from each other.
+- The final report must be entirely in English, except for proper names, products, protocols, and technical jargon.
+- Do not leave labels, full sentences, or entire fields in Portuguese.
 
-EXEMPLO CURTO DE RISCO SUPERFICIAL A EVITAR:
-- "Falta uma politica de seguranca robusta e consistente entre os sistemas."
+SHORT EXAMPLE OF A SUPERFICIAL RISK TO AVOID:
+- "A robust and consistent security policy is missing across the systems."
 
-EXEMPLO CURTO DE RISCO ADEQUADO:
-- "A convivencia entre contratos de dados heterogeneos e transformacoes sem evidencia de governanca de schema cria risco de divergencia semantica entre produtor e consumidor, porque o mesmo atributo pode circular com significado, cardinalidade ou formato diferente em interfaces distintas, gerando integracao funcionalmente operante, mas semanticamente inconsistente."
+SHORT EXAMPLE OF AN ADEQUATE RISK:
+- "The coexistence of heterogeneous data contracts and transformations without clear schema governance creates a semantic divergence risk between producer and consumer, because the same attribute may circulate with different meaning, cardinality, or format across distinct interfaces, resulting in an integration that is operationally active but semantically inconsistent."
 
-EXEMPLO CURTO DE RECOMENDACAO ADEQUADA:
-- "Padronizar contratos versionados por interface, com validacao obrigatoria no ponto de publicacao e criterios claros de compatibilidade regressiva, reduz ruptura silenciosa entre produtores e consumidores ao custo de maior governanca sobre evolucao de schemas, testes de contrato e pipeline de deploy."
+SHORT EXAMPLE OF AN ADEQUATE RECOMMENDATION:
+- "Standardizing versioned contracts per interface, with mandatory validation at the publication point and clear backward-compatibility criteria, reduces silent breakage between producers and consumers at the cost of stronger governance over schema evolution, contract testing, and the deployment pipeline."
 
-FORMATO DE SAIDA:
-- Retorne somente JSON valido, sem markdown, sem cercas de codigo e sem texto extra.
-- Use exatamente esta estrutura:
+OUTPUT FORMAT:
+- Return only valid JSON, with no markdown, no code fences, and no extra text.
+- Use exactly this structure:
 {
-  "sumario_executivo": "texto",
-  "analise_arquitetonica": ["paragrafo 1", "paragrafo 2", "paragrafo 3", "paragrafo 4"],
+  "sumario_executivo": "text",
+  "analise_arquitetonica": ["paragraph 1", "paragraph 2", "paragraph 3", "paragraph 4"],
   "riscos": [
     {
-      "titulo": "nome objetivo do risco",
-      "classe_de_falha": "texto",
-      "elementos_afetados": "texto",
-      "evidencia_do_cadastro": "texto",
-      "decisao_arquitetural_ou_suposicao_implicita": "texto",
-      "mecanismo_causal": "texto",
-      "manifestacao_da_falha": "texto",
-      "impacto_na_interoperabilidade": "texto",
-      "consequencias_operacionais": "texto"
+      "titulo": "objective risk name",
+      "classe_de_falha": "text",
+      "elementos_afetados": "text",
+      "evidencia_do_cadastro": "text",
+      "decisao_arquitetural_ou_suposicao_implicita": "text",
+      "mecanismo_causal": "text",
+      "manifestacao_da_falha": "text",
+      "impacto_na_interoperabilidade": "text",
+      "consequencias_operacionais": "text"
     },
     {
-      "titulo": "nome objetivo do risco",
-      "classe_de_falha": "texto",
-      "elementos_afetados": "texto",
-      "evidencia_do_cadastro": "texto",
-      "decisao_arquitetural_ou_suposicao_implicita": "texto",
-      "mecanismo_causal": "texto",
-      "manifestacao_da_falha": "texto",
-      "impacto_na_interoperabilidade": "texto",
-      "consequencias_operacionais": "texto"
+      "titulo": "objective risk name",
+      "classe_de_falha": "text",
+      "elementos_afetados": "text",
+      "evidencia_do_cadastro": "text",
+      "decisao_arquitetural_ou_suposicao_implicita": "text",
+      "mecanismo_causal": "text",
+      "manifestacao_da_falha": "text",
+      "impacto_na_interoperabilidade": "text",
+      "consequencias_operacionais": "text"
     }
   ],
   "melhorias_padronizacao": [
     {
-      "titulo": "nome objetivo da recomendacao",
-      "objetivo_arquitetural": "texto",
-      "correcao_ou_padronizacao_necessaria": "texto",
-      "principio_ou_padrao_aplicavel": "texto",
-      "aplicacao_no_cenario": "texto",
-      "fraqueza_arquitetural_mitigada": "texto",
-      "impacto_esperado_na_interoperabilidade": "texto",
-      "primeiro_passo_pratico": "texto",
-      "trade_off_introduzido": "texto"
+      "titulo": "objective recommendation name",
+      "objetivo_arquitetural": "text",
+      "correcao_ou_padronizacao_necessaria": "text",
+      "principio_ou_padrao_aplicavel": "text",
+      "aplicacao_no_cenario": "text",
+      "fraqueza_arquitetural_mitigada": "text",
+      "impacto_esperado_na_interoperabilidade": "text",
+      "primeiro_passo_pratico": "text",
+      "trade_off_introduzido": "text"
     },
     {
-      "titulo": "nome objetivo da recomendacao",
-      "objetivo_arquitetural": "texto",
-      "correcao_ou_padronizacao_necessaria": "texto",
-      "principio_ou_padrao_aplicavel": "texto",
-      "aplicacao_no_cenario": "texto",
-      "fraqueza_arquitetural_mitigada": "texto",
-      "impacto_esperado_na_interoperabilidade": "texto",
-      "primeiro_passo_pratico": "texto",
-      "trade_off_introduzido": "texto"
+      "titulo": "objective recommendation name",
+      "objetivo_arquitetural": "text",
+      "correcao_ou_padronizacao_necessaria": "text",
+      "principio_ou_padrao_aplicavel": "text",
+      "aplicacao_no_cenario": "text",
+      "fraqueza_arquitetural_mitigada": "text",
+      "impacto_esperado_na_interoperabilidade": "text",
+      "primeiro_passo_pratico": "text",
+      "trade_off_introduzido": "text"
     }
   ],
-  "consideracoes_finais": "texto"
+  "consideracoes_finais": "text"
 }
 """.strip()
 
 		user_prompt = f"""
-OBJETIVO:
-Gerar uma analise tecnica util para arquitetos e desenvolvedores de integracao, com foco em planejamento, interoperabilidade e riscos reais do fluxo cadastrado.
+OBJECTIVE:
+Generate a useful technical analysis for integration architects and developers, focused on planning, interoperability, and realistic risks in the registered flow.
 
-EVIDENCIAS PRIMARIAS:
+PRIMARY EVIDENCE:
 {_packet_to_json(analysis_packet)}
 
-INSTRUCOES DE PROFUNDIDADE:
-- "sumario_executivo": no maximo 4 frases e sem repetir a secao analitica.
-- "analise_arquitetonica": exatamente 4 paragrafos densos, cada um com foco diferente:
-  1. topologia, acoplamento, coesao e semantica de comunicacao;
-  2. contratos, schemas, versionamento, transformacoes e consistencia semantica;
-  3. confiabilidade operacional, sincronizacao do fluxo, ordenacao, idempotencia quando materialmente inferivel, detectabilidade e propagacao de falhas;
-  4. governanca de contratos, escalabilidade, evolucao futura e capacidade de padronizacao entre sistemas.
-- "riscos": exatamente 2 riscos, cada um de classe diferente, com cadeia causal clara, evidencia concreta do cadastro e impacto operacional concreto.
-- "melhorias_padronizacao": exatamente 2 recomendacoes, cada uma respondendo a uma fraqueza diferente, com acao aplicavel, impacto arquitetural real, primeiro passo pratico e trade-off.
-- "consideracoes_finais": 1 paragrafo conclusivo, sem recontar a secao 2.
+DEPTH INSTRUCTIONS:
+- "sumario_executivo": at most 4 sentences and without repeating the analytical section.
+- "analise_arquitetonica": exactly 4 dense paragraphs, each with a different focus:
+  1. topology, coupling, cohesion, and communication semantics;
+  2. contracts, schemas, versioning, transformations, and semantic consistency;
+  3. operational reliability, flow synchronization, ordering, idempotency when materially inferable, detectability, and failure propagation;
+  4. contract governance, scalability, future evolution, and standardization capacity between systems.
+- "riscos": exactly 2 risks, each from a different class, with a clear causal chain, concrete evidence from the registration, and concrete operational impact.
+- "melhorias_padronizacao": exactly 2 recommendations, each addressing a different weakness, with an applicable action, real architectural impact, a first practical step, and a trade-off.
+- "consideracoes_finais": 1 concluding paragraph, without retelling section 2.
 
-RESTRICOES ADICIONAIS:
-- Nao trate a ausencia de politica corporativa de seguranca como risco central, porque essa dimensao nao e coletada diretamente pela ferramenta.
-- Nao trate a ausencia de politica corporativa de retries como risco central, a menos que as evidencias indiquem fragilidade concreta do fluxo.
-- Nas secoes 3 e 4, prefira riscos e melhorias ligados a contrato de dados, compatibilidade semantica, transformacoes, compartilhamento de banco, acoplamento, sincronizacao, entrega, versionamento e evolucao de interfaces.
-- Nao use frases vagas. Cada campo das secoes 3 e 4 deve ter 1 ou 2 frases completas e tecnicas.
-- Em "evidencia_do_cadastro", cite explicitamente sistemas, interfaces, estilos de integracao, protocolos, formatos, throttling, schemas, filas, tabelas ou justificativas arquiteturais realmente presentes nas evidencias.
-- Em "mecanismo_causal", explique a cadeia tecnica entre a decisao arquitetural e o risco observado.
-- Em "impacto_na_interoperabilidade", explique o efeito sobre compatibilidade semantica, acoplamento, sincronizacao, entrega ou evolucao do ecossistema.
-- Em "aplicacao_no_cenario" e "primeiro_passo_pratico", descreva onde a recomendacao entra no fluxo cadastrado e qual seria a primeira acao concreta de adocao.
-- As recomendacoes nao podem apenas reescrever os riscos em tom positivo; elas devem explicar o que padronizar, onde, por que e com qual efeito esperado.
-- Use as referencias RAG apenas para reforcar boas praticas, nao para inventar o cenario.
+ADDITIONAL RESTRICTIONS:
+- Do not treat the absence of a corporate security policy as a central risk, because that dimension is not directly collected by the tool.
+- Do not treat the absence of a corporate retry policy as a central risk unless the evidence indicates concrete fragility in the flow.
+- In sections 3 and 4, prefer risks and improvements related to data contracts, semantic compatibility, transformations, database sharing, coupling, synchronization, delivery, versioning, and interface evolution.
+- Do not use vague phrases. Each field in sections 3 and 4 must contain 1 or 2 complete and technical sentences.
+- In "evidencia_do_cadastro", explicitly cite systems, interfaces, integration styles, protocols, formats, throttling, schemas, queues, tables, or architectural rationales that are actually present in the evidence.
+- In "mecanismo_causal", explain the technical chain between the architectural decision and the observed risk.
+- In "impacto_na_interoperabilidade", explain the effect on semantic compatibility, coupling, synchronization, delivery, or ecosystem evolution.
+- In "aplicacao_no_cenario" and "primeiro_passo_pratico", describe where the recommendation enters the registered flow and what the first concrete adoption action would be.
+- Recommendations cannot merely rewrite the risks in a positive tone; they must explain what to standardize, where, why, and with which expected effect.
+- Use the RAG references only to reinforce good practices, not to invent the scenario.
 """.strip()
 	else:
 		system_prompt = """
-You are a senior integration and interoperability architect focused on analysis and planning.
+You are the analysis engine of SPPOI Tool.
 
-Return only valid JSON with no markdown and no extra text.
-Do not mention SPPOI Tool as an analyzed system.
-Do not invent controls or risks unsupported by evidence.
-Executive summary must not repeat the architectural analysis.
-Architectural analysis must contain exactly 4 dense paragraphs.
-Return exactly 2 distinct risks and 2 distinct recommendations.
+MISSION:
+- Support architects and integration developers during the analysis and planning stage.
+- Use the registered technical evidence as the primary source of evaluation.
+- Use retrieved scientific references only as secondary support for patterns, best practices, and recommendations.
+
+NON-NEGOTIABLE RULES:
+- Treat the material as sufficient for architectural analysis whenever there are at least 2 systems, 1 interface, and 1 integration style.
+- Never turn the report into a generic complaint about insufficient information when this minimum is present.
+- Do not enumerate absences mechanically.
+- Mention a limitation only when it blocks a specific conclusion, and cite it once with a concrete architectural consequence.
+- The executive summary must not repeat phrases or the same argumentative line as the architectural analysis.
+- The architectural analysis must deepen the reasoning; the summary only synthesizes the final judgment.
+- The two risks must cover different failure classes.
+- The two recommendations must address different weaknesses and cannot be rewrites of one another.
+- Do not invent technologies, controls, or flows absent from the evidence.
+- Return the final report entirely in English.
+
+OUTPUT CONTRACT:
+- Return valid Markdown only.
+- Use exactly 5 sections once each.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 materially distinct risks.
+- Section 4 must contain exactly 2 materially distinct recommendations.
 """.strip()
 
 		user_prompt = f"""
-PRIMARY EVIDENCE:
+TASK:
+Produce a technical assessment that helps decision-makers analyze and plan integrations based on the registered architecture.
+
+PROJECT EVIDENCE (PRIMARY SOURCE):
 {_packet_to_json(analysis_packet)}
+
+MANDATORY RESPONSE TEMPLATE:
+## 1. Executive Summary
+- Write 1 short paragraph with at most 4 sentences.
+- Synthesize the final judgment without rewriting section 2.
+
+## 2. Architectural Analysis
+- Write exactly 4 dense paragraphs.
+- Paragraph 1: integration topology, coupling, cohesion, and communication semantics.
+- Paragraph 2: data contracts, schemas, versioning, transformations, and semantic consistency.
+- Paragraph 3: operational reliability, retries, idempotency, failure propagation, observability, and detectability.
+- Paragraph 4: security boundaries, governance, scalability, and future evolution.
+- Each paragraph must cite concrete registered evidence and develop architectural implications.
+
+## 3. Critical Integration and Interoperability Risks
+### Risk 1
+- Affected elements:
+- Architectural decision or implicit assumption:
+- Failure manifestation:
+- Operational consequences:
+
+### Risk 2
+- Affected elements:
+- Architectural decision or implicit assumption:
+- Failure manifestation:
+- Operational consequences:
+
+Section 3 rules:
+- Risk 1 and Risk 2 must address different failure classes.
+- Each field must be a complete, concrete, technical sentence.
+- Show causal chain, interoperability effect, and operational impact.
+
+## 4. Improvements and Standardization
+### Recommendation 1
+- Required correction or standardization:
+- Applicable integration principle or pattern:
+- Where it applies:
+- Architectural weakness mitigated:
+- Trade-off introduced:
+
+### Recommendation 2
+- Required correction or standardization:
+- Applicable integration principle or pattern:
+- Where it applies:
+- Architectural weakness mitigated:
+- Trade-off introduced:
+
+Section 4 rules:
+- Each recommendation must respond to a different risk or weakness.
+- Explain the improvement with technical depth, not superficially.
+- Use RAG references only to strengthen standardization, best practices, and justification.
+
+## 5. Final Considerations
+- Write 1 concluding paragraph focused on planning implications for the registered scenario.
+
+FINAL INSTRUCTIONS:
+- If there is explicit evidence of security, contracts, throttling, delivery guarantees, schemas, or runtime controls, acknowledge it and evaluate adequacy.
+- Do not use generic expressions such as "more details are needed" as the backbone of the report.
+- Do not reuse the same weakness as the main explanation across all sections.
 """.strip()
 
 	full_prompt = system_prompt + "\n\n" + user_prompt
@@ -934,7 +1013,7 @@ def get_rag_context(reference_query):
 
 	relevant_docs = [(doc, score) for doc, score in results if score >= 0.22][:2]
 	if not relevant_docs:
-		return "Nenhuma referÃªncia adicional relevante recuperada."
+		return "No additional relevant reference was retrieved."
 
 	references = []
 	for index, (doc, score) in enumerate(relevant_docs, start=1):
@@ -1107,46 +1186,46 @@ def _sections_34_need_enrichment(payload):
 def _render_analysis_markdown(payload, lang='pt'):
 	if lang == 'pt':
 		lines = [
-			'## 1. SumÃ¡rio',
+			'## 1. Sumário',
 			payload.get('sumario_executivo', ''),
 			'',
-			'## 2. AnÃ¡lise ArquitetÃ´nica',
+			'## 2. Análise Arquitetônica',
 		]
 		for paragraph in payload.get('analise_arquitetonica', []):
 			lines.extend([paragraph, ''])
 
-		lines.append('## 3. Riscos CrÃ­ticos de IntegraÃ§Ã£o e Interoperabilidade')
+		lines.append('## 3. Riscos Críticos de Integração e Interoperabilidade')
 		for index, risk in enumerate(payload.get('riscos', []), start=1):
 			lines.extend([
 				f'### Risco {index}: {risk.get("titulo", "")}'.rstrip(': '),
 				f'- Classe de falha: {risk.get("classe_de_falha", "")}',
 				f'- Elementos afetados: {risk.get("elementos_afetados", "")}',
-				f'- EvidÃªncia do cadastro: {risk.get("evidencia_do_cadastro", "")}',
-				f'- DecisÃ£o arquitetural ou suposiÃ§Ã£o implÃ­cita: {risk.get("decisao_arquitetural_ou_suposicao_implicita", "")}',
+				f'- Evidência do cadastro: {risk.get("evidencia_do_cadastro", "")}',
+				f'- Decisão arquitetural ou suposição implícita: {risk.get("decisao_arquitetural_ou_suposicao_implicita", "")}',
 				f'- Mecanismo causal: {risk.get("mecanismo_causal", "")}',
-				f'- ManifestaÃ§Ã£o da falha: {risk.get("manifestacao_da_falha", "")}',
+				f'- Manifestação da falha: {risk.get("manifestacao_da_falha", "")}',
 				f'- Impacto na interoperabilidade: {risk.get("impacto_na_interoperabilidade", "")}',
-				f'- ConsequÃªncias operacionais: {risk.get("consequencias_operacionais", "")}',
+				f'- Consequências operacionais: {risk.get("consequencias_operacionais", "")}',
 				'',
 			])
 
-		lines.append('## 4. Melhorias e PadronizaÃ§Ã£o')
+		lines.append('## 4. Melhorias e Padronização')
 		for index, improvement in enumerate(payload.get('melhorias_padronizacao', []), start=1):
 			lines.extend([
-				f'### RecomendaÃ§Ã£o {index}: {improvement.get("titulo", "")}'.rstrip(': '),
+				f'### Recomendação {index}: {improvement.get("titulo", "")}'.rstrip(': '),
 				f'- Objetivo arquitetural: {improvement.get("objetivo_arquitetural", "")}',
-				f'- CorreÃ§Ã£o ou padronizaÃ§Ã£o necessÃ¡ria: {improvement.get("correcao_ou_padronizacao_necessaria", "")}',
-				f'- PrincÃ­pio ou padrÃ£o de integraÃ§Ã£o aplicÃ¡vel: {improvement.get("principio_ou_padrao_aplicavel", "")}',
-				f'- AplicaÃ§Ã£o no cenÃ¡rio: {improvement.get("aplicacao_no_cenario", "")}',
+				f'- Correção ou padronização necessária: {improvement.get("correcao_ou_padronizacao_necessaria", "")}',
+				f'- Princípio ou padrão de integração aplicável: {improvement.get("principio_ou_padrao_aplicavel", "")}',
+				f'- Aplicação no cenário: {improvement.get("aplicacao_no_cenario", "")}',
 				f'- Fraqueza arquitetural mitigada: {improvement.get("fraqueza_arquitetural_mitigada", "")}',
 				f'- Impacto esperado na interoperabilidade: {improvement.get("impacto_esperado_na_interoperabilidade", "")}',
-				f'- Primeiro passo prÃ¡tico: {improvement.get("primeiro_passo_pratico", "")}',
+				f'- Primeiro passo prático: {improvement.get("primeiro_passo_pratico", "")}',
 				f'- Trade-off introduzido: {improvement.get("trade_off_introduzido", "")}',
 				'',
 			])
 
 		lines.extend([
-			'## 5. ConsideraÃ§Ãµes Finais',
+			'## 5. Considerações Finais',
 			payload.get('consideracoes_finais', ''),
 		])
 		return '\n'.join(lines).strip()
@@ -1225,20 +1304,20 @@ def _request_model_text(client, system_prompt, user_prompt, temperature=None, to
 
 def _repair_json_response(client, raw_text, analysis_packet, lang='pt'):
 	if lang == 'pt':
-		repair_system_prompt = "Voce corrige saidas de modelo para JSON valido em portugues do Brasil."
+		repair_system_prompt = "You repair model outputs into valid JSON in English."
 		repair_user_prompt = f"""
-Converta a resposta abaixo em JSON valido, sem markdown e sem texto extra.
+Convert the response below into valid JSON, with no markdown and no extra text.
 
-REGRAS:
-- Nao adicione fatos novos.
-- Preserve apenas informacoes coerentes com as evidencias.
-- Use exatamente as chaves esperadas:
+RULES:
+- Do not add new facts.
+- Preserve only information consistent with the evidence.
+- Use exactly the expected keys:
   sumario_executivo
   analise_arquitetonica
   riscos
   melhorias_padronizacao
   consideracoes_finais
-- Em cada risco, preserve e preencha:
+- In each risk, preserve and fill:
   titulo
   classe_de_falha
   elementos_afetados
@@ -1248,7 +1327,7 @@ REGRAS:
   manifestacao_da_falha
   impacto_na_interoperabilidade
   consequencias_operacionais
-- Em cada recomendacao, preserve e preencha:
+- In each recommendation, preserve and fill:
   titulo
   objetivo_arquitetural
   correcao_ou_padronizacao_necessaria
@@ -1258,21 +1337,21 @@ REGRAS:
   impacto_esperado_na_interoperabilidade
   primeiro_passo_pratico
   trade_off_introduzido
-- Use 4 paragrafos em analise_arquitetonica, 2 riscos e 2 recomendacoes.
-- Cada campo das secoes 3 e 4 deve ter 1 ou 2 frases tecnicas completas, sem superficialidade.
-- Nao escreva frases completas em ingles.
-- Nao mencione SPPOI Tool no conteudo do relatorio.
-- Nao transforme ausencia de politica corporativa de seguranca em risco central se isso nao estiver nas evidencias.
-- Nao transforme autenticacao declarada, por si so, em politica de seguranca corporativa.
-- Se houver duvida entre enfatizar seguranca ou interoperabilidade, priorize interoperabilidade, contratos, acoplamento, transformacoes e evolucao de interfaces.
+- Use 4 paragraphs in analise_arquitetonica, 2 risks and 2 recommendations.
+- Each field in sections 3 and 4 must have 1 or 2 complete technical sentences, without superficiality.
+- Do not write full sentences in Portuguese.
+- Do not mention SPPOI Tool in the report content.
+- Do not turn the absence of a corporate security policy into a central risk if that is not in the evidence.
+- Do not turn declared authentication alone into a corporate security policy.
+- If there is doubt between emphasizing security or interoperability, prioritize interoperability, contracts, coupling, transformations, and interface evolution.
 
-EVIDENCIAS RESUMIDAS:
+EVIDENCE SNAPSHOT:
 {_packet_to_json({
 	'project': analysis_packet.get('project', {}),
 	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
 })}
 
-RESPOSTA ORIGINAL:
+ORIGINAL RESPONSE:
 {raw_text}
 """.strip()
 	else:
@@ -1291,17 +1370,17 @@ RESPOSTA ORIGINAL:
 
 def _enrich_risks_and_improvements(client, analysis_packet, payload, lang='pt'):
 	if lang == 'pt':
-		enrichment_system_prompt = "Voce aprofunda riscos e recomendacoes de integracao em JSON valido, sem inventar fatos."
+		enrichment_system_prompt = "You deepen integration risks and recommendations into valid JSON without inventing facts."
 		enrichment_user_prompt = f"""
-Reescreva apenas as secoes "riscos" e "melhorias_padronizacao" do JSON abaixo, mantendo total fidelidade as evidencias cadastradas.
+Rewrite only the sections "riscos" and "melhorias_padronizacao" from the JSON below, preserving total fidelity to the registered evidence.
 
-REGRAS:
-- Nao altere o sumario, a analise arquitetonica nem as consideracoes finais.
-- Retorne somente JSON valido com exatamente duas chaves de topo:
+RULES:
+- Do not change the summary, the architectural analysis, or the final considerations.
+- Return valid JSON only with exactly two top-level keys:
   riscos
   melhorias_padronizacao
-- Preserve exatamente 2 riscos e 2 recomendacoes.
-- Cada risco deve conter e aprofundar:
+- Preserve exactly 2 risks and 2 recommendations.
+- Each risk must preserve and deepen:
   titulo
   classe_de_falha
   elementos_afetados
@@ -1311,7 +1390,7 @@ REGRAS:
   manifestacao_da_falha
   impacto_na_interoperabilidade
   consequencias_operacionais
-- Cada recomendacao deve conter e aprofundar:
+- Each recommendation must preserve and deepen:
   titulo
   objetivo_arquitetural
   correcao_ou_padronizacao_necessaria
@@ -1321,15 +1400,15 @@ REGRAS:
   impacto_esperado_na_interoperabilidade
   primeiro_passo_pratico
   trade_off_introduzido
-- Cada campo das secoes 3 e 4 deve ter 1 ou 2 frases completas, tecnicas e especificas.
-- Em evidencia_do_cadastro, mencione explicitamente sistemas, interfaces, estilos, contratos, formatos, filas, tabelas, protocolos, throttling ou justificativas realmente presentes nas evidencias.
-- Em mecanismo_causal, explique a cadeia tecnica que conecta a decisao arquitetural ao problema observado.
-- Em aplicacao_no_cenario e primeiro_passo_pratico, descreva onde agir no cenario cadastrado e qual seria a primeira medida concreta.
-- As recomendacoes nao podem repetir os riscos em tom positivo; devem prescrever mudanca arquitetural aplicavel.
-- Nao trate ausencia de politica corporativa de seguranca como eixo central.
-- Se houver disputa de foco, priorize interoperabilidade, semantica de dados, acoplamento, sincronizacao, entrega, versionamento e evolucao de interfaces.
+- Each field in sections 3 and 4 must contain 1 or 2 complete, technical, and specific sentences.
+- In evidencia_do_cadastro, explicitly mention systems, interfaces, styles, contracts, formats, queues, tables, protocols, throttling, or rationales that are actually present in the evidence.
+- In mecanismo_causal, explain the technical chain connecting the architectural decision to the observed problem.
+- In aplicacao_no_cenario and primeiro_passo_pratico, describe where to act in the registered scenario and what the first concrete measure would be.
+- Recommendations cannot merely repeat the risks in a positive tone; they must prescribe an applicable architectural change.
+- Do not treat the absence of a corporate security policy as the central axis.
+- If there is a focus dispute, prioritize interoperability, data semantics, coupling, synchronization, delivery, versioning, and interface evolution.
 
-EVIDENCIAS:
+EVIDENCE:
 {_packet_to_json({
 	'project': analysis_packet.get('project', {}),
 	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
@@ -1339,7 +1418,7 @@ EVIDENCIAS:
 	'integration_styles': analysis_packet.get('integration_styles', []),
 })}
 
-JSON ATUAL:
+CURRENT JSON:
 {_packet_to_json(payload)}
 """.strip()
 	else:
@@ -1425,57 +1504,7 @@ def _localize_pt_report_labels(text):
 		return text
 
 	replacements = [
-		(r'(?im)^##\s*1\.\s*Sumario Executivo\s*$', '## 1. SumÃ¡rio'),
-		(r'(?im)^##\s*2\.\s*Analise Arquitetonica\s*$', '## 2. AnÃ¡lise ArquitetÃ´nica'),
-		(r'(?im)^##\s*3\.\s*Riscos Criticos de Integracao e Interoperabilidade\s*$', '## 3. Riscos CrÃ­ticos de IntegraÃ§Ã£o e Interoperabilidade'),
-		(r'(?im)^##\s*4\.\s*Melhorias e Padronizacao\s*$', '## 4. Melhorias e PadronizaÃ§Ã£o'),
-		(r'(?im)^##\s*5\.\s*Consideracoes Finais\s*$', '## 5. ConsideraÃ§Ãµes Finais'),
-		(r'(?im)^###\s*Risk\s+(\d+):\s*(.+?)\s*$', r'### Risco \1: \2'),
-		(r'(?im)^##\s*1\.\s*Executive Summary\s*$', '## 1. SumÃ¡rio Executivo'),
-		(r'(?im)^##\s*2\.\s*Architectural Analysis\s*$', '## 2. AnÃ¡lise ArquitetÃ´nica'),
-		(r'(?im)^##\s*3\.\s*Critical Integration and Interoperability Risks\s*$', '## 3. Riscos CrÃ­ticos de IntegraÃ§Ã£o e Interoperabilidade'),
-		(r'(?im)^##\s*4\.\s*Improvements and Standardization\s*$', '## 4. Melhorias e PadronizaÃ§Ã£o'),
-		(r'(?im)^##\s*5\.\s*Final Considerations\s*$', '## 5. ConsideraÃ§Ãµes Finais'),
-		(r'(?im)^###\s*Recommendation\s+(\d+):\s*(.+?)\s*$', r'### RecomendaÃ§Ã£o \1: \2'),
-		(r'(?im)^###\s*Recomendacao\s+(\d+):\s*(.+?)\s*$', r'### RecomendaÃ§Ã£o \1: \2'),
-		(r'(?im)^###\s*Risk\s+(\d+)\s*$', r'### Risco \1'),
-		(r'(?im)^###\s*Recommendation\s+(\d+)\s*$', r'### RecomendaÃ§Ã£o \1'),
-		(r'(?im)^###\s*Recomendacao\s+(\d+)\s*$', r'### RecomendaÃ§Ã£o \1'),
-		(r'(?im)^-\s*Affected elements:', '- Elementos afetados:'),
-		(r'(?im)^-\s*Evidence from registration:', '- EvidÃªncia do cadastro:'),
-		(r'(?im)^-\s*Architectural decision or implicit assumption:', '- DecisÃ£o arquitetural ou suposiÃ§Ã£o implÃ­cita:'),
-		(r'(?im)^-\s*Causal mechanism:', '- Mecanismo causal:'),
-		(r'(?im)^-\s*Failure manifestation:', '- ManifestaÃ§Ã£o da falha:'),
-		(r'(?im)^-\s*Interoperability impact:', '- Impacto na interoperabilidade:'),
-		(r'(?im)^-\s*Operational consequences:', '- ConsequÃªncias operacionais:'),
-		(r'(?im)^-\s*Architectural objective:', '- Objetivo arquitetural:'),
-		(r'(?im)^-\s*Required correction or standardization:', '- CorreÃ§Ã£o ou padronizaÃ§Ã£o necessÃ¡ria:'),
-		(r'(?im)^-\s*Applicable integration principle or pattern:', '- PrincÃ­pio ou padrÃ£o de integraÃ§Ã£o aplicÃ¡vel:'),
-		(r'(?im)^-\s*Where it applies:', '- AplicaÃ§Ã£o no cenÃ¡rio:'),
-		(r'(?im)^-\s*Application in this scenario:', '- AplicaÃ§Ã£o no cenÃ¡rio:'),
-		(r'(?im)^-\s*Architectural weakness removed:', '- Fraqueza arquitetural mitigada:'),
-		(r'(?im)^-\s*Expected interoperability impact:', '- Impacto esperado na interoperabilidade:'),
-		(r'(?im)^-\s*First practical step:', '- Primeiro passo prÃ¡tico:'),
-		(r'(?im)^-\s*Trade-off introduced:', '- Trade-off introduzido:'),
-		(r'(?im)^-\s*Evidencia do cadastro:', '- EvidÃªncia do cadastro:'),
-		(r'(?im)^-\s*Decisao arquitetural ou suposicao implicita:', '- DecisÃ£o arquitetural ou suposiÃ§Ã£o implÃ­cita:'),
-		(r'(?im)^-\s*Mecanismo causal:', '- Mecanismo causal:'),
-		(r'(?im)^-\s*Manifestacao da falha:', '- ManifestaÃ§Ã£o da falha:'),
-		(r'(?im)^-\s*Impacto na interoperabilidade:', '- Impacto na interoperabilidade:'),
-		(r'(?im)^-\s*Consequencias operacionais:', '- ConsequÃªncias operacionais:'),
-		(r'(?im)^-\s*Objetivo arquitetural:', '- Objetivo arquitetural:'),
-		(r'(?im)^-\s*Correcao ou padronizacao necessaria:', '- CorreÃ§Ã£o ou padronizaÃ§Ã£o necessÃ¡ria:'),
-		(r'(?im)^-\s*Principio ou padrao de integracao aplicavel:', '- PrincÃ­pio ou padrÃ£o de integraÃ§Ã£o aplicÃ¡vel:'),
-		(r'(?im)^-\s*Aplicacao no cenario:', '- AplicaÃ§Ã£o no cenÃ¡rio:'),
-		(r'(?im)^-\s*Impacto esperado na interoperabilidade:', '- Impacto esperado na interoperabilidade:'),
-		(r'(?im)^-\s*Primeiro passo pratico:', '- Primeiro passo prÃ¡tico:'),
-	]
-	for pattern, replacement in replacements:
-		text = re.sub(pattern, replacement, text)
-	return text
-
-
-def _analysis_needs_revision(text):
+		(r'(?im)^##\s*1\.\s*Sumario Executivo\s*
 	if not _clean_text(text):
 		return True
 
@@ -1550,40 +1579,40 @@ def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
 
 	if lang == 'pt':
 		review_prompt = f"""
-Reescreva o relatorio abaixo da SPPOI Tool sem adicionar fatos novos.
+Rewrite the SPPOI Tool report below without adding new facts.
 
-OBJETIVO EDITORIAL:
-- Eliminar repeticao entre a secao 1 e a secao 2.
-- Garantir profundidade tecnica real nas secoes 3 e 4.
-- Corrigir qualquer rotulo, frase ou trecho inteiro em ingles, preservando apenas nomes proprios, protocolos, padroes e jargoes tecnicos.
-- Manter fidelidade total as evidencias cadastradas.
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
 
-REGRAS OBRIGATORIAS:
-- Use exatamente 5 secoes.
-- A secao 1 deve ser mais sintetica que a secao 2 e nao pode reutilizar frases da secao 2.
-- A secao 2 deve ter exatamente 4 paragrafos densos.
-- A secao 3 deve conter exatamente 2 riscos de classes diferentes.
-- A secao 4 deve conter exatamente 2 recomendacoes de classes diferentes.
-- Mantenha a estrutura em subtitulos "### Risco X" e "### Recomendacao X" com bullets tecnicos abaixo de cada item.
-- Cada campo das secoes 3 e 4 deve ser uma frase completa, tecnica e concreta, evitando respostas telegrÃ¡ficas.
-- Em cada risco, aprofunde evidencia do cadastro, mecanismo causal, impacto na interoperabilidade e consequencias operacionais.
-- Em cada recomendacao, aprofunde objetivo arquitetural, aplicacao no cenario, impacto esperado e primeiro passo pratico.
-- Nao deixe rotulos em ingles como Risk, Recommendation, Affected elements, Required correction ou equivalentes.
-- Nao mencione SPPOI Tool como elemento da arquitetura analisada.
-- Nao transforme ausencia de politica corporativa de seguranca em risco central quando isso nao estiver nas evidencias.
-- Nao transforme autenticacao declarada, por si so, em politica de seguranca corporativa.
-- Nao repita a mesma fragilidade como justificativa dominante em todas as secoes.
-- Quando houver disputa de foco, prefira aprofundar contrato de dados, compatibilidade semantica, acoplamento, transformacoes, sincronizacao, versionamento e evolucao das interfaces.
-- Nao invente controles, tecnologias ou detalhes de implementacao.
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
 
-EVIDENCIAS RESUMIDAS:
+EVIDENCE SNAPSHOT:
 {_packet_to_json({
 	'project': analysis_packet.get('project', {}),
 	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
 	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
 })}
 
-RASCUNHO:
+DRAFT:
 {draft_text}
 """.strip()
 	else:
@@ -1614,7 +1643,7 @@ DRAFT REPORT:
 
 	try:
 		review_system_message = (
-			"Voce revisa relatorios tecnicos estruturados em portugues do Brasil."
+			"You revise structured technical reports in English."
 			if lang == 'pt'
 			else "You revise structured technical reports."
 		)
@@ -1666,7 +1695,7 @@ def _chat_stream_for_project(request, projeto):
 	lang = data.get('lang', 'pt')
 	user_message = data.get('message', '').strip()
 	if not user_message:
-		user_message = 'Analisar integracao com base nos dados fornecidos.'
+		user_message = 'Analyze the integration based on the provided data.'
 
 	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
 		projeto,
@@ -1690,7 +1719,7 @@ def _chat_stream_for_project(request, projeto):
 		try:
 			rag_context = get_rag_context(retrieval_query)
 		except Exception:
-			rag_context = "Nenhuma referÃªncia adicional relevante recuperada."
+			rag_context = "No additional relevant reference was retrieved."
 
 		model_input = _compose_model_input(user_prompt, rag_context, user_message)
 		revision_applied = False
@@ -1698,8 +1727,8 @@ def _chat_stream_for_project(request, projeto):
 		assistant_content = ""
 
 		try:
-			yield f"event: status\ndata: {json.dumps('Estruturando evidÃªncias tÃ©cnicas...')}\n\n"
-			yield f"event: status\ndata: {json.dumps('Gerando anÃ¡lise arquitetural...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
 			raw_response = _request_model_text(client, system_prompt, model_input)
 
 			try:
@@ -1713,7 +1742,7 @@ def _chat_stream_for_project(request, projeto):
 
 			if not _analysis_payload_is_complete(analysis_payload):
 				structured_generation_retried = True
-				yield f"event: status\ndata: {json.dumps('ReforÃ§ando profundidade analÃ­tica...')}\n\n"
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
 				analysis_payload = _normalize_analysis_payload(
 					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
 				)
@@ -1729,7 +1758,7 @@ def _chat_stream_for_project(request, projeto):
 
 			should_review = _analysis_needs_revision(assistant_content)
 			if should_review:
-				yield f"event: status\ndata: {json.dumps('Revisando consistÃªncia e removendo repetiÃ§Ãµes...')}\n\n"
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
 				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
 				if lang == 'pt':
 					assistant_content = _localize_pt_report_labels(assistant_content)
@@ -1813,6 +1842,5512 @@ def chat_stream_current(request):
 	if not projeto:
 		projeto = projects_qs.first()
 	if not projeto:
-		return JsonResponse({'error': 'Conversa nÃ£o encontrada.'}, status=404)
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 1. Sumário'),
+		(r'(?im)^##\s*2\.\s*Analise Arquitetonica\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 2. Análise Arquitetônica'),
+		(r'(?im)^##\s*3\.\s*Riscos Criticos de Integracao e Interoperabilidade\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 3. Riscos Críticos de Integração e Interoperabilidade'),
+		(r'(?im)^##\s*4\.\s*Melhorias e Padronizacao\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 4. Melhorias e Padronização'),
+		(r'(?im)^##\s*5\.\s*Consideracoes Finais\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 5. Considerações Finais'),
+		(r'(?im)^###\s*Risk\s+(\d+):\s*(.+?)\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, r'### Risco \1: \2'),
+		(r'(?im)^##\s*1\.\s*Executive Summary\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 1. Sumário Executivo'),
+		(r'(?im)^##\s*2\.\s*Architectural Analysis\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 2. Análise Arquitetônica'),
+		(r'(?im)^##\s*3\.\s*Critical Integration and Interoperability Risks\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 3. Riscos Críticos de Integração e Interoperabilidade'),
+		(r'(?im)^##\s*4\.\s*Improvements and Standardization\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 4. Melhorias e Padronização'),
+		(r'(?im)^##\s*5\.\s*Final Considerations\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, '## 5. Considerações Finais'),
+		(r'(?im)^###\s*Recommendation\s+(\d+):\s*(.+?)\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, r'### Recomendação \1: \2'),
+		(r'(?im)^###\s*Recomendacao\s+(\d+):\s*(.+?)\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, r'### Recomendação \1: \2'),
+		(r'(?im)^###\s*Risk\s+(\d+)\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, r'### Risco \1'),
+		(r'(?im)^###\s*Recommendation\s+(\d+)\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, r'### Recomendação \1'),
+		(r'(?im)^###\s*Recomendacao\s+(\d+)\s*
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
+	request.session['current_project_id'] = projeto.id
+	return _chat_stream_for_project(request, projeto)
+, r'### Recomendação \1'),
+		(r'(?im)^-\s*Affected elements:', '- Elementos afetados:'),
+		(r'(?im)^-\s*Evidence from registration:', '- Evidência do cadastro:'),
+		(r'(?im)^-\s*Architectural decision or implicit assumption:', '- Decisão arquitetural ou suposição implícita:'),
+		(r'(?im)^-\s*Causal mechanism:', '- Mecanismo causal:'),
+		(r'(?im)^-\s*Failure manifestation:', '- Manifestação da falha:'),
+		(r'(?im)^-\s*Interoperability impact:', '- Impacto na interoperabilidade:'),
+		(r'(?im)^-\s*Operational consequences:', '- Consequências operacionais:'),
+		(r'(?im)^-\s*Architectural objective:', '- Objetivo arquitetural:'),
+		(r'(?im)^-\s*Required correction or standardization:', '- Correção ou padronização necessária:'),
+		(r'(?im)^-\s*Applicable integration principle or pattern:', '- Princípio ou padrão de integração aplicável:'),
+		(r'(?im)^-\s*Where it applies:', '- Aplicação no cenário:'),
+		(r'(?im)^-\s*Application in this scenario:', '- Aplicação no cenário:'),
+		(r'(?im)^-\s*Architectural weakness removed:', '- Fraqueza arquitetural mitigada:'),
+		(r'(?im)^-\s*Expected interoperability impact:', '- Impacto esperado na interoperabilidade:'),
+		(r'(?im)^-\s*First practical step:', '- Primeiro passo prático:'),
+		(r'(?im)^-\s*Trade-off introduced:', '- Trade-off introduzido:'),
+		(r'(?im)^-\s*Evidencia do cadastro:', '- Evidência do cadastro:'),
+		(r'(?im)^-\s*Decisao arquitetural ou suposicao implicita:', '- Decisão arquitetural ou suposição implícita:'),
+		(r'(?im)^-\s*Mecanismo causal:', '- Mecanismo causal:'),
+		(r'(?im)^-\s*Manifestacao da falha:', '- Manifestação da falha:'),
+		(r'(?im)^-\s*Impacto na interoperabilidade:', '- Impacto na interoperabilidade:'),
+		(r'(?im)^-\s*Consequencias operacionais:', '- Consequências operacionais:'),
+		(r'(?im)^-\s*Objetivo arquitetural:', '- Objetivo arquitetural:'),
+		(r'(?im)^-\s*Correcao ou padronizacao necessaria:', '- Correção ou padronização necessária:'),
+		(r'(?im)^-\s*Principio ou padrao de integracao aplicavel:', '- Princípio ou padrão de integração aplicável:'),
+		(r'(?im)^-\s*Aplicacao no cenario:', '- Aplicação no cenário:'),
+		(r'(?im)^-\s*Impacto esperado na interoperabilidade:', '- Impacto esperado na interoperabilidade:'),
+		(r'(?im)^-\s*Primeiro passo pratico:', '- Primeiro passo prático:'),
+	]
+	for pattern, replacement in replacements:
+		text = re.sub(pattern, replacement, text)
+	return text
+
+
+def _analysis_needs_revision(text):
+	if not _clean_text(text):
+		return True
+
+	sections = _extract_numbered_sections(text)
+	if len(sections) < 5:
+		return True
+
+	paragraphs = _split_paragraphs(text)
+	normalized_paragraphs = [_normalize_for_comparison(item) for item in paragraphs]
+	if len(normalized_paragraphs) != len(set(normalized_paragraphs)):
+		return True
+
+	if _has_english_template_markers(text):
+		return True
+
+	if 'sppoi tool' in _normalize_for_comparison(text):
+		return True
+
+	summary_text = sections.get('1', '')
+	analysis_text = sections.get('2', '')
+	risks_text = sections.get('3', '')
+	improvements_text = sections.get('4', '')
+
+	if len(_split_paragraphs(analysis_text)) < 4:
+		return True
+
+	if _token_overlap_ratio(summary_text, analysis_text) > 0.72:
+		return True
+
+	risk_blocks = _extract_subsections(risks_text)
+	if len(risk_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 420 for _, block_text in risk_blocks):
+		return True
+
+	recommendation_blocks = _extract_subsections(improvements_text)
+	if len(recommendation_blocks) < 2:
+		return True
+	if any(len(_clean_text(block_text)) < 460 for _, block_text in recommendation_blocks):
+		return True
+	for (_, risk_block), (_, recommendation_block) in zip(risk_blocks, recommendation_blocks):
+		if _token_overlap_ratio(risk_block, recommendation_block) > 0.8:
+			return True
+
+	normalized_text = _normalize_for_comparison(text)
+	repetition_markers = [
+		'falta de detalhes',
+		'gestao de erros',
+		'seguranca',
+		'sppoi tool',
+		'insufficient information',
+		'more details are needed',
+	]
+	for marker in repetition_markers:
+		if normalized_text.count(marker) > 1:
+			return True
+
+	security_overfocus_markers = [
+		'politica de seguranca',
+		'padronizacao de seguranca',
+		'seguranca robusta e consistente',
+	]
+	if any(marker in normalized_text for marker in security_overfocus_markers):
+		return True
+
+	return False
+
+
+def _revise_analysis_output(client, draft_text, analysis_packet, lang='pt'):
+	if not _clean_text(draft_text):
+		return draft_text
+
+	if lang == 'pt':
+		review_prompt = f"""
+Rewrite the SPPOI Tool report below without adding new facts.
+
+EDITORIAL GOAL:
+- Eliminate repetition between section 1 and section 2.
+- Ensure real technical depth in sections 3 and 4.
+- Correct any label, sentence, or entire passage written in Portuguese, preserving only proper names, protocols, standards, and technical jargon.
+- Maintain total fidelity to the registered evidence.
+
+MANDATORY RULES:
+- Use exactly 5 sections.
+- Section 1 must be more synthetic than section 2 and cannot reuse phrases from section 2.
+- Section 2 must contain exactly 4 dense paragraphs.
+- Section 3 must contain exactly 2 risks from different classes.
+- Section 4 must contain exactly 2 recommendations from different classes.
+- Keep the structure with subtitles "### Risk X" and "### Recommendation X" with technical bullets below each item.
+- Each field in sections 3 and 4 must be a complete, technical, and concrete sentence, avoiding telegraphic responses.
+- In each risk, deepen the registration evidence, the causal mechanism, the interoperability impact, and the operational consequences.
+- In each recommendation, deepen the architectural objective, the application in the scenario, the expected impact, and the first practical step.
+- Do not leave labels in Portuguese such as Risco, Recomendação, or their equivalents.
+- Do not mention SPPOI Tool as an element of the analyzed architecture.
+- Do not turn the absence of a corporate security policy into a central risk when that is not part of the evidence.
+- Do not turn declared authentication, by itself, into a corporate security policy.
+- Do not repeat the same weakness as the dominant justification in all sections.
+- When there is a focus dispute, prefer data contracts, semantic compatibility, coupling, transformations, synchronization, versioning, and interface evolution.
+- Do not invent controls, technologies, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT:
+{draft_text}
+""".strip()
+	else:
+		review_prompt = f"""
+Rewrite the draft report below for SPPOI Tool without adding new facts.
+
+EDITORIAL GOAL:
+- Remove repetition between sections 1 and 2.
+- Ensure section 2 contains exactly 4 dense paragraphs.
+- Deepen sections 3 and 4 while keeping them evidence-based.
+
+MANDATORY RULES:
+- Keep exactly 5 sections.
+- Keep exactly 2 risks and 2 recommendations.
+- Do not reintroduce the same caveat in multiple sections.
+- Do not invent controls, products, or implementation details.
+
+EVIDENCE SNAPSHOT:
+{_packet_to_json({
+	'project': analysis_packet.get('project', {}),
+	'coverage_snapshot': analysis_packet.get('coverage_snapshot', {}),
+	'explicit_evidence_highlights': analysis_packet.get('explicit_evidence_highlights', {}),
+})}
+
+DRAFT REPORT:
+{draft_text}
+""".strip()
+
+	try:
+		review_system_message = (
+			"You revise structured technical reports in English."
+			if lang == 'pt'
+			else "You revise structured technical reports."
+		)
+		response = client.chat.completions.create(
+			model=HF_CHAT_MODEL,
+			messages=[
+				{"role": "system", "content": review_system_message},
+				{"role": "user", "content": review_prompt},
+			],
+			temperature=0.05,
+			top_p=0.5,
+			max_tokens=HF_CHAT_MAX_TOKENS,
+			seed=42,
+			timeout=HF_CHAT_TIMEOUT,
+		)
+	except Exception:
+		return draft_text
+
+	if not response.choices:
+		return draft_text
+
+	revised_text = (response.choices[0].message.content or '').strip()
+	if lang == 'pt':
+		revised_text = _localize_pt_report_labels(revised_text)
+	return revised_text or draft_text
+
+
+def _yield_text_chunks(text, chunk_size=160):
+	for start in range(0, len(text), chunk_size):
+		yield text[start:start + chunk_size]
+
+
+def _chat_stream_for_project(request, projeto):
+	systems = list(Sistema.objects.filter(projeto=projeto))
+	interfaces = list(Interface.objects.filter(projeto=projeto).select_related('sistema'))
+	integration_styles = list(
+		EstiloIntegracao.objects.filter(projeto=projeto)
+		.select_related('sistema_origem', 'sistema_destino')
+		.prefetch_related('interfaces_usadas')
+	)
+
+	if len(systems) < 2 or len(interfaces) < 1 or len(integration_styles) < 1:
+		return JsonResponse({'error': 'Preencha pelo menos 2 sistemas, 1 interface e 1 integracao antes da consulta.'}, status=400)
+
+	if not settings.HF_API_TOKEN:
+		return JsonResponse({'error': 'HF_API_TOKEN nao configurado no ambiente.'}, status=400)
+
+	data = json.loads(request.body.decode('utf-8'))
+	lang = data.get('lang', 'pt')
+	user_message = data.get('message', '').strip()
+	if not user_message:
+		user_message = 'Analyze the integration based on the provided data.'
+
+	system_prompt, user_prompt, full_prompt, retrieval_query, analysis_packet = create_prompt(
+		projeto,
+		systems,
+		interfaces,
+		integration_styles,
+		lang=lang,
+	)
+
+	client = OpenAI(
+		base_url="https://router.huggingface.co/v1",
+		api_key=settings.HF_API_TOKEN,
+	)
+
+	def event_stream():
+		analysis_start = time.time()
+		ChatMessage.objects.create(projeto=projeto, role='user', content=user_message)
+		yield f"event: prompt\ndata: {json.dumps(full_prompt)}\n\n"
+		yield f"event: status\ndata: {json.dumps('Preparando contexto RAG...')}\n\n"
+
+		try:
+			rag_context = get_rag_context(retrieval_query)
+		except Exception:
+			rag_context = "No additional relevant reference was retrieved."
+
+		model_input = _compose_model_input(user_prompt, rag_context, user_message)
+		revision_applied = False
+		structured_generation_retried = False
+		assistant_content = ""
+
+		try:
+			yield f"event: status\ndata: {json.dumps('Estruturando evidÃƒÂªncias tÃƒÂ©cnicas...')}\n\n"
+			yield f"event: status\ndata: {json.dumps('Gerando anÃƒÂ¡lise arquitetural...')}\n\n"
+			raw_response = _request_model_text(client, system_prompt, model_input)
+
+			try:
+				analysis_payload = _normalize_analysis_payload(_parse_json_response(raw_response))
+			except Exception:
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Corrigindo estrutura da resposta...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, raw_response, analysis_packet, lang=lang)
+				)
+
+			if not _analysis_payload_is_complete(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('ReforÃƒÂ§ando profundidade analÃƒÂ­tica...')}\n\n"
+				analysis_payload = _normalize_analysis_payload(
+					_repair_json_response(client, _packet_to_json(analysis_payload), analysis_packet, lang=lang)
+				)
+
+			if _sections_34_need_enrichment(analysis_payload):
+				structured_generation_retried = True
+				yield f"event: status\ndata: {json.dumps('Aprofundando riscos e melhorias...')}\n\n"
+				analysis_payload = _enrich_risks_and_improvements(client, analysis_packet, analysis_payload, lang=lang)
+
+			assistant_content = _render_analysis_markdown(analysis_payload, lang=lang)
+			if lang == 'pt':
+				assistant_content = _localize_pt_report_labels(assistant_content)
+
+			should_review = _analysis_needs_revision(assistant_content)
+			if should_review:
+				yield f"event: status\ndata: {json.dumps('Revisando consistência e removendo repetições...')}\n\n"
+				assistant_content = _revise_analysis_output(client, assistant_content, analysis_packet, lang=lang)
+				if lang == 'pt':
+					assistant_content = _localize_pt_report_labels(assistant_content)
+				revision_applied = True
+
+			for chunk in _yield_text_chunks(assistant_content):
+				yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+			ChatMessage.objects.create(
+				projeto=projeto,
+				role='assistant',
+				content=assistant_content,
+				prompt_used=full_prompt,
+			)
+
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 200,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'revision_applied': revision_applied,
+				'structured_generation_retried': structured_generation_retried,
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.info(json.dumps(analysis_payload, ensure_ascii=False))
+
+			yield "event: done\ndata: {}\n\n"
+		except Exception as e:
+			duration_ms = int((time.time() - analysis_start) * 1000)
+			analysis_logger = logging.getLogger('chat.analysis')
+			analysis_payload = {
+				'event': 'chat_analysis_error',
+				'project_id': projeto.id,
+				'project_name': projeto.nome,
+				'session_key': request.session.session_key,
+				'lang': lang,
+				'status_code': 500,
+				'duration_ms': duration_ms,
+				'response_chars': len(assistant_content),
+				'error_type': type(e).__name__,
+				'error_message': str(e),
+				'ip': _get_client_ip(request),
+				'user_agent': request.META.get('HTTP_USER_AGENT'),
+				'referer': request.META.get('HTTP_REFERER'),
+			}
+			analysis_logger.exception(json.dumps(analysis_payload, ensure_ascii=False))
+			error_message = str(e) or 'Connection error.'
+			yield f"event: error\ndata: {json.dumps(error_message)}\n\n"
+
+	response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+	response['Cache-Control'] = 'no-cache'
+	response['X-Accel-Buffering'] = 'no'
+	return response
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream(request, project_id):
+	session_key = ensure_session_key(request)
+	projeto = _get_scoped_project_or_404(project_id, session_key)
+	return _chat_stream_for_project(request, projeto)
+
+
+@require_http_methods(["POST"])
+@require_captcha
+def chat_stream_current(request):
+	session_key = ensure_session_key(request)
+	projects_qs = _project_scope_qs(session_key).order_by('-criado_em')
+	project_id = request.session.get('current_project_id')
+	projeto = None
+	if project_id:
+		projeto = projects_qs.filter(pk=project_id).first()
+	if not projeto:
+		projeto = projects_qs.first()
+	if not projeto:
+		return JsonResponse({'error': 'Conversa não encontrada.'}, status=404)
 	request.session['current_project_id'] = projeto.id
 	return _chat_stream_for_project(request, projeto)
